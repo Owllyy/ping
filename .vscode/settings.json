@@ -6,6 +6,9 @@
         "typeinfo": "c",
         "atomic": "c",
         "bitset": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "limits": "c",
+        "ratio": "c",
+        "chrono": "c"
     }
 }
