@@ -5,6 +5,7 @@
         "stdlib.h": "c",
         "typeinfo": "c",
         "atomic": "c",
-        "bitset": "c"
+        "bitset": "c",
+        "types.h": "c"
     }
 }

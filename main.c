@@ -91,7 +91,9 @@ int main() {
     // SEND TO
     printf("%d\n", sendto(socket_fd, &packet, sizeof(struct packet), 0, (struct sockaddr *)&dst, sizeof(struct sockaddr_in)));
     // RCV MSG
-    printf("%zd\n", recvfrom(socket_fd, &buffer, 1024, 0, 0, 0));
+    printf("%zd\n", recvmsg(socket_fd, &response, 0));
 
-    printf("Type : %d Code : %d Arrival checksum : %d\n", ((struct packet_r*)buffer)->header_icmp.icmp_type, ((struct packet_r*)buffer)->header_icmp.icmp_code, ((struct packet_r*)buffer)->header_icmp.icmp_cksum);
+    packet_r * respons = (struct packet_r *)buffer;
+    printf("%s > %s: ", inet_ntop(AF_INET, &respons->header_ip.ip_src, name, 1024), inet_ntop(AF_INET, &respons->header_ip.ip_dst, name, 1024));
+    printf("type %d, error_code %d, id %d, seq %d, lenght %d\n\n", respons->header_icmp.icmp_type, respons->header_icmp.icmp_code, respons->header_icmp.icmp_hun.ih_idseq.icd_id, respons->header_icmp.icmp_hun.ih_idseq.icd_seq, respons->header_ip.ip_len);
 }
