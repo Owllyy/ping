@@ -9,7 +9,7 @@ typedef struct packet_r {
     struct ip header_ip;
     struct icmp header_icmp;
     char msg[64];
-} packet;
+} packet_r;
 
 // from rfc 1071
 uint16_t check_sum(const void* data, size_t len) {
@@ -93,5 +93,5 @@ int main() {
     // RCV MSG
     printf("%zd\n", recvfrom(socket_fd, &buffer, 1024, 0, 0, 0));
 
-    printf("Type : %d Code : %d Arrival checksum : %d\n", ((struct icmp*)buffer)->icmp_type, ((struct icmp*)buffer)->icmp_code, ((struct icmp*)buffer)->icmp_cksum);
+    printf("Type : %d Code : %d Arrival checksum : %d\n", ((struct packet_r*)buffer)->header_icmp.icmp_type, ((struct packet_r*)buffer)->header_icmp.icmp_code, ((struct packet_r*)buffer)->header_icmp.icmp_cksum);
 }
