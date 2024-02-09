@@ -111,16 +111,25 @@ void update_stat(statistics * stat, int is_received, struct timeval diff) {
     }
 }
 
-char address[] = "127.0.0.1";
+// char address[] = "127.0.0.1";
+char * dns_resolution(char *fqdn) {
+    struct addrinfo hints;
+    struct addrinfo *res;
 
-int main() {
+    hints.ai_family = AF_INET;
+
+    getaddrinfo(fqdn, 0, &hints, &res);
+    return res->ai_addr;
+}
+
+int main(int ac, char** av) {
     int socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (socket_fd < 0)
         return -1;
 
-
-    struct sockaddr_in dst = set_sockaddr_in(address);
-    printf("PING %s (%s): %lu data bytes\n", address, address, 64 - sizeof(struct icmp));
+    char *address = av[1];
+    struct sockaddr_in *dst = dns_resolution(address);
+    printf("PING %s (%s): %lu data bytes\n", address, inet_ntoa(dst->sin_addr), 64 - sizeof(struct icmp));
 
     // STATISTICS INIT
     struct timeval start;
@@ -128,7 +137,7 @@ int main() {
     int is_received = 1;
     int i = 0;
 
-    for (;i < 10; i++) {
+    for (;i < 1000000; i++) {
 
         // INIT PACKET
         packet packet = set_packet(55, i);
@@ -138,7 +147,7 @@ int main() {
         // TIME INIT
         gettimeofday(&start, 0);
         // SEND TO
-        sendto(socket_fd, &packet, sizeof(struct packet), 0, (struct sockaddr *)&dst, sizeof(struct sockaddr_in));
+        sendto(socket_fd, &packet, sizeof(struct packet), 0, (struct sockaddr *)dst, sizeof(struct sockaddr_in));
         // RCV MSG
         recvmsg(socket_fd, &buffer, 0);
         packet_response * response = (struct packet_r *)buffer.msg_iov->iov_base;
@@ -152,7 +161,7 @@ int main() {
 
         // UPDATE STATISTICS
         update_stat(&stat, 1, diff);
-        usleep(300000);
+        // usleep(300000);
     }
     // DISPLAY STATISTICS
     printf("--- %s ping statistics ---\n", address);
