@@ -11,3 +11,12 @@ double duration_in_ms(struct timeval from) {
 
     return timeval_to_float(end) - timeval_to_float(from);
 }
+
+int is_timeout(struct timeval start, unsigned int timeout_ms) {
+    struct timeval now;
+
+    gettimeofday(&now, 0);
+    if (duration_in_ms(start) > timeout_ms)
+        return 1;
+    return 0;
+}

@@ -21,43 +21,31 @@ struct sockaddr_in set_sockaddr_in(char *addr) {
     return ret;
 }
 
-packet set_packet(int id, int seq, char *src, char *dst) {
+packet set_packet(int id, int seq) {
     packet packet;
     memset(&packet, 0, sizeof(packet));
-    // IP HEADER CONFIGURATION
-    packet.header_ip.ip_hl = 5; //header size in int
-    packet.header_ip.ip_v = 4; //Ipv4
-    packet.header_ip.ip_tos = 0; //Not used
-    packet.header_ip.ip_len = sizeof(struct packet); //Total size of packet
-    packet.header_ip.ip_id = htons(55); //id for fragmentation
-    packet.header_ip.ip_off = 0;
-    packet.header_ip.ip_ttl = 62; // Time to live in node
-    packet.header_ip.ip_p = IPPROTO_ICMP;
-    inet_pton(AF_INET, src, &packet.header_ip.ip_src);
-    inet_pton(AF_INET, dst, &packet.header_ip.ip_dst);
-    packet.header_ip.ip_sum = check_sum(&packet, sizeof(struct packet));
 
     // ICMP HEADER CONFIGURATION
     packet.header_icmp.icmp_type = ICMP_ECHO;
     packet.header_icmp.icmp_code = 0;
     packet.header_icmp.icmp_hun.ih_idseq.icd_id = htons(id);
     packet.header_icmp.icmp_hun.ih_idseq.icd_seq = htons(seq);
-    packet.header_icmp.icmp_cksum = check_sum(&packet, sizeof(struct packet));
+    packet.header_icmp.icmp_cksum = check_sum(&packet, sizeof(packet));
 
     return packet;
 }
 
-void display_response(packet* response, float time) {
+void display_response(packet_r * response, float time) {
     char buffer[1024];
     printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
-    response->header_ip.ip_len + sizeof(struct ip), 
+    response->header_ip.ip_len, 
     inet_ntop(AF_INET, &response->header_ip.ip_src, buffer, 1024), 
     ntohs(response->header_icmp.icmp_hun.ih_idseq.icd_seq), 
     response->header_ip.ip_ttl,
     time);
 }
 
-void display_packet(packet* response) {
+void display_packet(packet_r * response) {
     char buffer[1024];
     printf("Packet = \n    Ip: hl=%u v=%u tos=%u len=%u id=%u off=%u ttl=%u p=%u sum=%u src=%s dst=%s\n",
     response->header_ip.ip_hl,
@@ -80,7 +68,6 @@ void display_packet(packet* response) {
     ntohs(response->header_icmp.icmp_hun.ih_idseq.icd_seq));
 }
 
-
 struct sockaddr *dns_resolution(char *fqdn) {
     struct addrinfo hints;
     struct addrinfo *res;
@@ -90,17 +77,18 @@ struct sockaddr *dns_resolution(char *fqdn) {
 
     
     getaddrinfo(fqdn, 0, &hints, &res);
-    return res->ai_addr;
+    return res;
 }
 
 int init_socket() {
+    struct timeval timeout;      
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 1000;
     int socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-    int true = 1;
-    if (setsockopt(socket_fd, IPPROTO_IP, IP_HDRINCL, &true, sizeof(true)) < 0) {
-        perror("setsockopt failed");
-        exit(EXIT_FAILURE);
-    }
-    if (socket_fd < 0)
+    
+    if (socket_fd < 0 || setsockopt (socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout,sizeof timeout) < 0) {
+        printf("setsockopt failed\n");
         exit(-1);
+    }
     return socket_fd;
 }
