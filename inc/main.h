@@ -8,3 +8,5 @@
 #include <variance.h>
 #include <packet.h>
 #include <duration.h>
+
+#include <ifaddrs.h>
