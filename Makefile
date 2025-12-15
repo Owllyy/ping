@@ -1,7 +1,7 @@
 .DEFAULT_GOAL = all
 NAME = ft_ping
 
-CFLAGS += -Wall -Wextra -fsanitize=address -g
+CFLAGS += -Wall -Wextra -Werror
 SRC_DIR = src
 SRC = $(shell find $(SRC_DIR) -type f -name *.c)
 INC_DIR = inc
@@ -10,14 +10,14 @@ OBJ_DIR = .obj
 OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 $(NAME) : $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ -lm
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@ -I $(INC_DIR)
 
 # Mandatory Rules
-.PHONY: all clean fclean re run
+.PHONY: all clean fclean re test-vm
 
 all : $(NAME)
 

@@ -18,8 +18,8 @@ void update_stat(statistics * stat, int is_received, float diff) {
 }
 
 void display_statistics(statistics stat) {
-    float loss = ((float)stat.received / (float)stat.transmitted - 1) * 100;
-    printf("%d packets transmitted, %d packets received, %.3f%% packets loss\n", stat.transmitted, stat.received, loss);
+    float loss = (1.0 - (float)stat.received / (float)stat.transmitted) * 100.0;
+    printf("%d packets transmitted, %d packets received, %.1f%% packet loss\n", stat.transmitted, stat.received, loss);
     if (stat.received) {
         printf("round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\n",
         stat.min,
@@ -27,4 +27,9 @@ void display_statistics(statistics stat) {
         stat.max,
         get_variance(stat.var));
     }
+}
+
+void display_final_stats(char *address, statistics stat) {
+    printf("\n--- %s ping statistics ---\n", address);
+    display_statistics(stat);
 }

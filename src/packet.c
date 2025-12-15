@@ -22,6 +22,10 @@ struct sockaddr_in set_sockaddr_in(char *addr) {
 }
 
 packet set_packet(int id, int seq, char *src, char *dst) {
+    return set_packet_with_ttl(id, seq, src, dst, 64);
+}
+
+packet set_packet_with_ttl(int id, int seq, char *src, char *dst, int ttl) {
     packet packet;
     memset(&packet, 0, sizeof(packet));
     // IP HEADER CONFIGURATION
@@ -31,7 +35,7 @@ packet set_packet(int id, int seq, char *src, char *dst) {
     packet.header_ip.ip_len = sizeof(struct packet); //Total size of packet
     packet.header_ip.ip_id = htons(55); //id for fragmentation
     packet.header_ip.ip_off = 0;
-    packet.header_ip.ip_ttl = 62; // Time to live in node
+    packet.header_ip.ip_ttl = ttl; // Time to live in node (customizable)
     packet.header_ip.ip_p = IPPROTO_ICMP;
     inet_pton(AF_INET, src, &packet.header_ip.ip_src);
     inet_pton(AF_INET, dst, &packet.header_ip.ip_dst);
@@ -50,9 +54,9 @@ packet set_packet(int id, int seq, char *src, char *dst) {
 void display_response(packet* response, float time) {
     char buffer[1024];
     printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
-    response->header_ip.ip_len + sizeof(struct ip), 
-    inet_ntop(AF_INET, &response->header_ip.ip_src, buffer, 1024), 
-    ntohs(response->header_icmp.icmp_hun.ih_idseq.icd_seq), 
+    ntohs(response->header_ip.ip_len),
+    inet_ntop(AF_INET, &response->header_ip.ip_src, buffer, 1024),
+    ntohs(response->header_icmp.icmp_hun.ih_idseq.icd_seq),
     response->header_ip.ip_ttl,
     time);
 }
@@ -88,19 +92,31 @@ struct sockaddr *dns_resolution(char *fqdn) {
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_INET;
 
-    
-    getaddrinfo(fqdn, 0, &hints, &res);
+    int ret = getaddrinfo(fqdn, 0, &hints, &res);
+    if (ret != 0) {
+        fprintf(stderr, "ft_ping: %s: %s\n", fqdn, gai_strerror(ret));
+        exit(1);
+    }
+    if (!res) {
+        fprintf(stderr, "ft_ping: %s: Unknown host\n", fqdn);
+        exit(1);
+    }
     return res->ai_addr;
 }
 
 int init_socket() {
     int socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    if (socket_fd < 0) {
+        perror("ft_ping: socket");
+        fprintf(stderr, "ft_ping: (Did you run with sudo?)\n");
+        exit(1);
+    }
+
     int true = 1;
     if (setsockopt(socket_fd, IPPROTO_IP, IP_HDRINCL, &true, sizeof(true)) < 0) {
-        perror("setsockopt failed");
-        exit(EXIT_FAILURE);
+        perror("ft_ping: setsockopt");
+        exit(1);
     }
-    if (socket_fd < 0)
-        exit(-1);
+
     return socket_fd;
 }
