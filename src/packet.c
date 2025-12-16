@@ -31,7 +31,7 @@ packet set_packet(int id, int seq) {
 void display_response(struct ip *ip_hdr, struct icmp *icmp_hdr, float time) {
     char buffer[1024];
     printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
-    ntohs(ip_hdr->ip_len),
+    PACKET_SIZE,
     inet_ntop(AF_INET, &ip_hdr->ip_src, buffer, 1024),
     ntohs(icmp_hdr->icmp_hun.ih_idseq.icd_seq),
     ip_hdr->ip_ttl,

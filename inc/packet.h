@@ -11,11 +11,10 @@
 #include <stdlib.h>
 
 #define PACKET_SIZE 64
-#define IP_HEADER_SIZE 20
 
 typedef struct packet {
     struct icmp header_icmp;
-    char msg[PACKET_SIZE - IP_HEADER_SIZE - sizeof(struct icmp)];
+    char msg[PACKET_SIZE - sizeof(struct icmp)];
 } packet;
 
 uint16_t check_sum(const void* data, size_t len);
