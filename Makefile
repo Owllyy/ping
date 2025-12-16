@@ -16,7 +16,6 @@ $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@ -I $(INC_DIR)
 
-# Mandatory Rules
 .PHONY: all clean fclean re test-vm
 
 all : $(NAME)
@@ -30,7 +29,6 @@ fclean : clean
 re : fclean
 	$(MAKE) all
 
-# Automatic Dependencies Tracking
 $(OBJ_DIR)/%.d : $(SRC_DIR)/%.c
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -I $(INC_DIR) -MM -MG -MT $(@:.d=.o) $< -o $@

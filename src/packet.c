@@ -14,76 +14,29 @@ uint16_t check_sum(const void* data, size_t len) {
     return ~sum;
 }
 
-struct sockaddr_in set_sockaddr_in(char *addr) {
-    struct sockaddr_in ret;
-    ret.sin_family = AF_INET;
-    inet_pton(AF_INET, addr, &ret.sin_addr);
-    return ret;
+packet set_packet(int id, int seq) {
+    packet pkt;
+    memset(&pkt, 0, sizeof(pkt));
+
+    pkt.header_icmp.icmp_type = ICMP_ECHO;
+    pkt.header_icmp.icmp_code = 0;
+    pkt.header_icmp.icmp_hun.ih_idseq.icd_id = htons(id);
+    pkt.header_icmp.icmp_hun.ih_idseq.icd_seq = htons(seq);
+    pkt.header_icmp.icmp_cksum = 0;
+    pkt.header_icmp.icmp_cksum = check_sum(&pkt, sizeof(pkt));
+
+    return pkt;
 }
 
-packet set_packet(int id, int seq, char *src, char *dst) {
-    return set_packet_with_ttl(id, seq, src, dst, 64);
-}
-
-packet set_packet_with_ttl(int id, int seq, char *src, char *dst, int ttl) {
-    packet packet;
-    memset(&packet, 0, sizeof(packet));
-    // IP HEADER CONFIGURATION
-    packet.header_ip.ip_hl = 5; //header size in int
-    packet.header_ip.ip_v = 4; //Ipv4
-    packet.header_ip.ip_tos = 0; //Not used
-    packet.header_ip.ip_len = sizeof(struct packet); //Total size of packet
-    packet.header_ip.ip_id = htons(55); //id for fragmentation
-    packet.header_ip.ip_off = 0;
-    packet.header_ip.ip_ttl = ttl; // Time to live in node (customizable)
-    packet.header_ip.ip_p = IPPROTO_ICMP;
-    inet_pton(AF_INET, src, &packet.header_ip.ip_src);
-    inet_pton(AF_INET, dst, &packet.header_ip.ip_dst);
-    packet.header_ip.ip_sum = check_sum(&packet, sizeof(struct packet));
-
-    // ICMP HEADER CONFIGURATION
-    packet.header_icmp.icmp_type = ICMP_ECHO;
-    packet.header_icmp.icmp_code = 0;
-    packet.header_icmp.icmp_hun.ih_idseq.icd_id = htons(id);
-    packet.header_icmp.icmp_hun.ih_idseq.icd_seq = htons(seq);
-    packet.header_icmp.icmp_cksum = check_sum(&packet, sizeof(struct packet));
-
-    return packet;
-}
-
-void display_response(packet* response, float time) {
+void display_response(struct ip *ip_hdr, struct icmp *icmp_hdr, float time) {
     char buffer[1024];
     printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
-    ntohs(response->header_ip.ip_len),
-    inet_ntop(AF_INET, &response->header_ip.ip_src, buffer, 1024),
-    ntohs(response->header_icmp.icmp_hun.ih_idseq.icd_seq),
-    response->header_ip.ip_ttl,
+    ntohs(ip_hdr->ip_len),
+    inet_ntop(AF_INET, &ip_hdr->ip_src, buffer, 1024),
+    ntohs(icmp_hdr->icmp_hun.ih_idseq.icd_seq),
+    ip_hdr->ip_ttl,
     time);
 }
-
-void display_packet(packet* response) {
-    char buffer[1024];
-    printf("Packet = \n    Ip: hl=%u v=%u tos=%u len=%u id=%u off=%u ttl=%u p=%u sum=%u src=%s dst=%s\n",
-    response->header_ip.ip_hl,
-    response->header_ip.ip_v,
-    response->header_ip.ip_tos,
-    response->header_ip.ip_len,
-    response->header_ip.ip_id,
-    response->header_ip.ip_off,
-    response->header_ip.ip_ttl,
-    response->header_ip.ip_p,
-    response->header_ip.ip_sum,
-    inet_ntop(AF_INET, &response->header_ip.ip_src, buffer, 1024),
-    inet_ntop(AF_INET, &response->header_ip.ip_dst, buffer, 1024));
-
-    printf("    ICMP: type=%u code=%u cksum=%u id=%u seq=%u\n",
-    response->header_icmp.icmp_type,
-    response->header_icmp.icmp_code,
-    ntohs(response->header_icmp.icmp_cksum),
-    ntohs(response->header_icmp.icmp_hun.ih_idseq.icd_id),
-    ntohs(response->header_icmp.icmp_hun.ih_idseq.icd_seq));
-}
-
 
 struct sockaddr *dns_resolution(char *fqdn) {
     struct addrinfo hints;
@@ -112,11 +65,20 @@ int init_socket() {
         exit(1);
     }
 
-    int true = 1;
-    if (setsockopt(socket_fd, IPPROTO_IP, IP_HDRINCL, &true, sizeof(true)) < 0) {
+    struct timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
         perror("ft_ping: setsockopt");
         exit(1);
     }
 
     return socket_fd;
+}
+
+void set_socket_ttl(int socket_fd, int ttl) {
+    if (setsockopt(socket_fd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) < 0) {
+        perror("ft_ping: setsockopt IP_TTL");
+        exit(1);
+    }
 }
