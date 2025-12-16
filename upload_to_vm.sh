@@ -5,6 +5,8 @@ VM_USER="vboxuser"
 VM_HOST="localhost"
 VM_PORT="2222"
 
+make re
+
 echo "Uploading ft_ping to VM..."
 scp -P "$VM_PORT" ft_ping "$VM_USER@$VM_HOST:~/"
 
