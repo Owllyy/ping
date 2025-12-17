@@ -2,8 +2,8 @@
 # Upload ft_ping to VM and open SSH connection
 
 VM_USER="vboxuser"
-VM_HOST="localhost"
-VM_PORT="2222"
+VM_HOST="10.12.200.21"
+VM_PORT="22"
 
 make re
 

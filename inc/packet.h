@@ -20,6 +20,8 @@ typedef struct packet {
 uint16_t check_sum(const void* data, size_t len);
 packet set_packet(int id, int seq);
 void display_response(struct ip *ip_hdr, struct icmp *icmp_hdr, float time);
+void display_error(struct ip *ip_hdr, struct icmp *icmp_hdr, int received_bytes);
+void display_error_verbose(struct ip *ip_hdr, struct icmp *icmp_hdr, int received_bytes);
 struct sockaddr * dns_resolution(char *fqdn);
 int init_socket();
 void set_socket_ttl(int socket_fd, int ttl);

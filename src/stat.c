@@ -18,7 +18,10 @@ void update_stat(statistics * stat, int is_received, float diff) {
 }
 
 void display_statistics(statistics stat) {
-    float loss = (1.0 - (float)stat.received / (float)stat.transmitted) * 100.0;
+    float loss = 100.0;
+    if (stat.transmitted > 0) {
+        loss = (1.0 - (float)stat.received / (float)stat.transmitted) * 100.0;
+    }
     printf("%d packets transmitted, %d packets received, %.1f%% packet loss\n", stat.transmitted, stat.received, loss);
     if (stat.received) {
         printf("round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\n",
