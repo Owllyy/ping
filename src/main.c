@@ -39,11 +39,11 @@ static void handle_response_display(char *buffer, int received_bytes, struct tim
     }
 }
 
-static bool is_response_filtered(char *buffer, int ping_id) {
+static bool is_response_valid(char *buffer, int ping_id) {
     struct ip *ip_hdr = (struct ip *)buffer;
     struct icmp *icmp_hdr = (struct icmp *)(buffer + (ip_hdr->ip_hl << 2));
 
-    return get_packet_id(ip_hdr, icmp_hdr) != ping_id;
+    return get_packet_id(ip_hdr, icmp_hdr) == ping_id;
 }
 
 static void ping_loop(int socket_fd, t_args *args, struct sockaddr_in *dst, statistics *stat) {
@@ -71,14 +71,13 @@ static void ping_loop(int socket_fd, t_args *args, struct sockaddr_in *dst, stat
                 goto next_ping;
             }
 
-            if(is_response_filtered(buffer, ping_id))
-                continue;
+            if(is_response_valid(buffer, ping_id))
+                break;
         }
 
         handle_response_display(buffer, received_bytes, loop_start, args, stat);
-        sleep_remaining_loop_duration(loop_start);
-
         next_ping:
+            sleep_remaining_loop_duration(loop_start);
             seq++;
     }
 }
