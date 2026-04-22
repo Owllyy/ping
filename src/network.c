@@ -43,19 +43,15 @@ void setup_network(t_args *args, int *socket_fd, char *src, struct sockaddr_in *
     }
 }
 
-int send_and_receive_ping(int socket_fd, packet *ping, struct sockaddr_in *dst, char *buffer, float *rtt, int *received_bytes) {
-    struct timeval start, end;
-
-    gettimeofday(&start, 0);
+void send_ping(int socket_fd, packet *ping, struct sockaddr_in *dst) {
     sendto(socket_fd, ping, sizeof(packet), 0, (struct sockaddr *)dst, sizeof(struct sockaddr_in));
-    ssize_t received = recvfrom(socket_fd, buffer, 1024, 0, 0, 0);
-    gettimeofday(&end, 0);
+}
 
+int receive_ping(int socket_fd, char *buffer, int *received_bytes) {
+    ssize_t received = recvfrom(socket_fd, buffer, 1024, 0, 0, 0);
     if (received < 0) {
         return -1;
     }
-
     *received_bytes = received;
-    *rtt = timeval_to_float(end) - timeval_to_float(start);
     return 0;
 }

@@ -132,11 +132,7 @@ struct sockaddr *dns_resolution(char *fqdn) {
     hints.ai_family = AF_INET;
 
     int ret = getaddrinfo(fqdn, 0, &hints, &res);
-    if (ret != 0) {
-        fprintf(stderr, "ft_ping: %s: %s\n", fqdn, gai_strerror(ret));
-        exit(1);
-    }
-    if (!res) {
+    if (ret != 0 || !res) {
         fprintf(stderr, "ft_ping: %s: Unknown host\n", fqdn);
         exit(1);
     }
