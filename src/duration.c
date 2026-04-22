@@ -45,9 +45,9 @@ void update_loop_deadline(int socket_fd, struct timeval *deadline) {
         remaining.tv_sec--;
         remaining.tv_usec += 1000000;
     }
-    if (remaining.tv_sec < 0) {
+    if (remaining.tv_sec < 0 || (remaining.tv_sec == 0 && remaining.tv_usec <= 0)) {
         remaining.tv_sec = 0;
-        remaining.tv_usec = 0;
+        remaining.tv_usec = 1;
     }
     setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &remaining, sizeof(remaining));
 }
