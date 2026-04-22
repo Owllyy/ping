@@ -14,18 +14,18 @@ uint16_t check_sum(const void* data, size_t len) {
     return ~sum;
 }
 
-packet set_packet(int id, int seq) {
-    packet pkt;
-    memset(&pkt, 0, sizeof(pkt));
+packet init_packet(int id, int seq) {
+    packet new_packet;
+    memset(&new_packet, 0, sizeof(new_packet));
 
-    pkt.header_icmp.icmp_type = ICMP_ECHO;
-    pkt.header_icmp.icmp_code = 0;
-    pkt.header_icmp.icmp_hun.ih_idseq.icd_id = htons(id);
-    pkt.header_icmp.icmp_hun.ih_idseq.icd_seq = htons(seq);
-    pkt.header_icmp.icmp_cksum = 0;
-    pkt.header_icmp.icmp_cksum = check_sum(&pkt, sizeof(pkt));
+    new_packet.header_icmp.icmp_type = ICMP_ECHO;
+    new_packet.header_icmp.icmp_code = 0;
+    new_packet.header_icmp.icmp_hun.ih_idseq.icd_id = htons(id);
+    new_packet.header_icmp.icmp_hun.ih_idseq.icd_seq = htons(seq);
+    new_packet.header_icmp.icmp_cksum = 0;
+    new_packet.header_icmp.icmp_cksum = check_sum(&new_packet, sizeof(new_packet));
 
-    return pkt;
+    return new_packet;
 }
 
 void display_response(struct ip *ip_hdr, struct icmp *icmp_hdr, float time) {
@@ -163,4 +163,16 @@ void set_socket_ttl(int socket_fd, int ttl) {
         perror("ft_ping: setsockopt IP_TTL");
         exit(1);
     }
+}
+
+int get_packet_id(struct ip *ip_hdr, struct icmp *icmp_hdr) {
+    if (icmp_hdr->icmp_type == ICMP_ECHOREPLY) {
+        return ntohs(icmp_hdr->icmp_hun.ih_idseq.icd_id);
+    } else if (icmp_hdr->icmp_type == ICMP_DEST_UNREACH || icmp_hdr->icmp_type == ICMP_TIME_EXCEEDED) {
+        struct ip *inner_ip = (struct ip *)((char *)icmp_hdr + 8);
+        struct icmp *inner_icmp = (struct icmp *)((char *)inner_ip + (inner_ip->ip_hl << 2));
+        (void)ip_hdr;
+        return ntohs(inner_icmp->icmp_hun.ih_idseq.icd_id);
+    }
+    return -1;
 }
