@@ -1,7 +1,4 @@
 #include <main.h>
-#include <args.h>
-#include <network.h>
-#include <packet.h>
 
 static statistics *g_stat = NULL;
 static char *g_address = NULL;

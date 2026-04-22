@@ -5,7 +5,10 @@
 #include <signal.h>
 #include <string.h>
 #include <stdbool.h>
+#include <args.h>
+#include <unistd.h>
 
+#include <network.h>
 #include <stat.h>
 #include <variance.h>
 #include <packet.h>
